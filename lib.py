@@ -33,7 +33,7 @@ class TBase:
             ") " + _log + "\n"
 
         print(_log)
-        self.fwrite("data", "log.txt", _log, "a+")
+        self.fwrite("", "log.txt", _log, "a+")
 
     def fwrite(self, p_dir, p_file, f_body, f_mode="w"):
         t_dir = self.multiDir(os.getcwd(), p_dir)
