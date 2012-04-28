@@ -33,7 +33,6 @@ class GetHandler(BaseHTTPRequestHandler):
         """
         self.send_response(200)
 
-        #self.wfile.write(message)
         _p = str(parsed_path.path)
         if _p == "/":
             _p = "/index"
@@ -71,5 +70,5 @@ class GetHandler(BaseHTTPRequestHandler):
 if __name__ == '__main__':
     from BaseHTTPServer import HTTPServer
     server = HTTPServer(('localhost', 8080), GetHandler)
-    print 'Starting server, use <Ctrl-C> to stop'
+    print('Starting server, use <Ctrl-C> to stop')
     server.serve_forever()

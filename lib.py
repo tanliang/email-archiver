@@ -19,7 +19,7 @@ import threading, base64
 class TBase:
 
     TFORMAT = "%Y-%m-%d %H:%M:%S"
-    DEBUG = True
+    DEBUG = False
     
     def __init__(self):
         self.params = {}
@@ -31,16 +31,14 @@ class TBase:
         self.params = pms
 
     def _log(self, _log):
-        if self.__class__.DEBUG == False:
-            return
-        
         tf = self.__class__.TFORMAT
         now = time.strftime(tf, time.localtime())
         _log = now + " Log info: (" + \
             str(self.__class__) + \
             ") " + _log + "\n"
 
-        print(_log)
+        if self.__class__.DEBUG:
+            print(_log)
         self.fwrite("", "log.txt", _log, "a+")
 
     def fwrite(self, p_dir, p_file, f_body, f_mode="w"):
@@ -163,8 +161,9 @@ class TMail(TBase):
                 self._log(_log)
                 unparsed = data_dir+"unparsed"
                 self.fwrite(unparsed, m_date+"_"+b64_title+".msg", mail)
-
-            #self.M.dele(idx)
+            
+            if TBase.DEBUG == False:
+                self.M.dele(idx)
 
     def getTitle(self, mail):
         subject, t = email.Header.decode_header(mail["Subject"])[0]
@@ -206,24 +205,22 @@ class Config(TBase):
             self.f.close()
 
     def getVal(self, section, key=""):
-        try:
-            return self._getVal(section, key)
-        except:
-            _log = traceback.format_exc()
-            self._log(_log)
-            sys.exit(1) 
-
-    def _getVal(self, section, key=""):
         if key:
             return self.c.get(section, key)
-        else:
-            return self.c.items(section)
+        return self.c.items(section)
 
 
 
 if __name__ == "__main__":
 
     c = Config()
+
+    try:
+        _debug = c.getVal("system", "debug")
+        if _debug == "true":
+            TBase.DEBUG = True
+    except:
+        pass
     
     for i in c.getVal("emails"):
         catalog, email_info = i
