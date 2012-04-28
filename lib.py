@@ -1,6 +1,14 @@
 #!/usr/bin/evn python
 # -*- coding: utf-8 -*-
-# author: leotan<tanjnr@gmail.com>
+
+"""Fetch Email to local directory.
+
+This module builds on poplib, email etc by fetching email data to local
+directory for later reference display.
+
+author: tanliang<tanjnr@gmail.com>
+
+"""
 
 import poplib, email, sys, time
 import hashlib, traceback
@@ -52,21 +60,11 @@ class TBase:
             t_dir = b_dir+m_dir
             if os.path.exists(t_dir):
                 continue
-            os.mkdir(t_dir)
+            try:
+                os.mkdir(t_dir)
+            except:
+                pass
         return t_dir
-
-    def base64Encode(self, raw_str):
-        safe_rep = {"+":"(","/":")"}
-        res = base64.b64encode(str(raw_str))
-        for k,v in safe_rep.iteritems():
-            res = res.replace(k,v)
-        return res
-
-    def base64Decode(self, raw_str):
-        back_rep = {"(":"+",")":"/"}
-        for k,v in back_rep.iteritems():
-            raw_str = raw_str.replace(k,v)
-        return base64.b64decode(raw_str)
 
 class TMailThread(threading.Thread):
 
@@ -87,10 +85,12 @@ class TMailMoreThread(threading.Thread):
         self._m = _m
 
     def run(self):
-        f_name = self.mail.get_filename()
+        f_name, t = email.Header.decode_header(self.mail.get_filename())[0]
+        if t:
+            f_name = f_name.decode(t, "ignore").encode("utf-8")
+
         f_more = self.mail.get_payload(decode = True)
-        #self._m.m_more[f_name] = f_more
-        self._m.fwrite(self.m_dir, f_name, f_more, "wb")
+        self._m.fwrite(self.m_dir, base64.urlsafe_b64encode(f_name), f_more, "wb")
 
 class TMail(TBase):
 
@@ -136,13 +136,15 @@ class TMail(TBase):
     def getMsg(self):
         self._connect()
         msg_num = len(self.M.list()[1])
-        p_dir = "data"+os.sep+self.params["addr"]
+        data_dir = "data"+os.sep
+        p_dir = data_dir+self.params["addr"]
 
         for i in range(msg_num):
             idx = i+1
             mail = email.message_from_string(string.join(self.M.retr(idx)[1], "\n"))
             m_title = str(self.getTitle(mail))
-            b64_title = self.base64Encode(m_title)
+            # 128bit file name limit
+            b64_title = base64.urlsafe_b64encode(m_title)[0:128]
             _data = " ".join(mail['Date'].split(" ")[1:5])
             _date = time.strptime(_data, "%d %b %Y %H:%M:%S")
             m_date = time.strftime("%Y%m%d-%H%M%S", _date)
@@ -157,7 +159,9 @@ class TMail(TBase):
                 self.fetchBody(mail, m_dir+os.sep+f_name)
                 self.fwrite(m_dir, f_name+".msg", self.m_body)
             except:
-                unparsed = p_dir+os.sep+"unparsed"
+                _log = traceback.format_exc()
+                self._log(_log)
+                unparsed = data_dir+"unparsed"
                 self.fwrite(unparsed, m_date+"_"+b64_title+".msg", mail)
 
             #self.M.dele(idx)
@@ -165,13 +169,8 @@ class TMail(TBase):
     def getTitle(self, mail):
         subject, t = email.Header.decode_header(mail["Subject"])[0]
         if t:
-            subject = unicode(subject, t).encode("utf-8", "ignore")
-
-        c = Config()
-        strips = c.getVal("system", "strips")
-        for i in strips.split("|"):
-            subject = subject.lstrip(i)
-        return subject.strip()
+            subject = subject.decode(t, "ignore").encode("utf-8")
+        return subject.split(":")[-1].strip()
 
     def fetchBody(self, mail, m_dir):
         if mail.is_multipart():
@@ -191,20 +190,7 @@ class TMail(TBase):
         if char == None:
             self.m_body += mail.get_payload(decode = True)
         else:
-            try:
-                self.m_body += unicode(mail.get_payload(decode = True), char).encode('utf-8')
-            except UnicodeDecodeError:
-                exctype, err_msg = sys.exc_info()[:2]
-                char, junk = str(err_msg).split(" ", 1)
-                char = char.strip("'")
-                if char:
-                    self.m_body += mail.get_payload(decode = True).decode(char).encode('utf-8')
-                    _log = self.params["addr"]+" "+char+"\n"
-                    self._log(_log)
-                else:
-                    _log = traceback.format_exc()
-                    self._log(_log)
-                    raise UnicodeDecodeError, "invalid unicode!"
+            self.m_body += mail.get_payload(decode = True).decode(char, "ignore").encode('utf-8')
 
 class Config(TBase):
 
@@ -246,5 +232,3 @@ if __name__ == "__main__":
         t = TMailThread()
         t.init(host, addr, pswd)
         t.start()
-
-
