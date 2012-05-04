@@ -141,18 +141,18 @@ class TMail(TBase):
             idx = i+1
             mail = email.message_from_string(string.join(self.M.retr(idx)[1], "\n"))
             m_title = str(self.getTitle(mail))
-            # 128bit file name limit
-            b64_title = base64.urlsafe_b64encode(m_title)[0:128]
-            _data = " ".join(mail['Date'].split(" ")[1:5])
-            _date = time.strptime(_data, "%d %b %Y %H:%M:%S")
-            m_date = time.strftime("%Y%m%d-%H%M%S", _date)
+            b64_title = base64.urlsafe_b64encode(m_title)
+            m_date = self.getDate(mail)
 
             key = hashlib.md5(str(m_title))
             key = key.hexdigest()
             self.m_body = ""
             self.m_more = {}
             try:
-                m_dir = p_dir+os.sep+b64_title
+                m_dir = p_dir+os.sep+key
+                if os.path.exists(m_dir+".name") == False:
+                    self.fwrite(p_dir, key+".name", m_title)
+
                 f_name = m_date+"_"+key
                 self.fetchBody(mail, m_dir+os.sep+f_name)
                 self.fwrite(m_dir, f_name+".msg", self.m_body)
@@ -170,6 +170,11 @@ class TMail(TBase):
         if t:
             subject = subject.decode(t, "ignore").encode("utf-8")
         return subject.split(":")[-1].strip()
+
+    def getDate(self, mail):
+        _data = " ".join(mail['Date'].split(" ")[1:5])
+        _date = time.strptime(_data, "%d %b %Y %H:%M:%S")
+        return time.strftime("%Y%m%d-%H%M%S", _date)
 
     def fetchBody(self, mail, m_dir):
         if mail.is_multipart():

@@ -33,20 +33,29 @@ class Page(TBase):
         _c = base64.urlsafe_b64decode(self.q["c"][0])
         c = self.d+os.sep+_c
         li_dict = {}
+        li_dict2 = {}
         li_sort = []
 
         for i in os.listdir(c):
             m_name = os.path.join(c,i)
+            if os.path.isfile(m_name):
+                continue
             t = os.stat(m_name)[ST_MTIME]
-            key = hashlib.md5(i)
-            key = str(t)+"_"+key.hexdigest()
-            li_dict[key] = i
+            key = str(t)+"_"+i
+
+            f = open(m_name+".name")
+            b = f.read()
+            f.close()
+
+            li_dict[key] = b
+            li_dict2[key] = str(sum([len(files) for root,dirs,files in os.walk(m_name)]))
             li_sort.append(key)
 
         li_sort.sort()
         for i in li_sort:
             m_name = li_dict[i]
-            res += "<li><a href=\"/more?c="+self.q["c"][0]+"&m="+m_name+"\">"+base64.urlsafe_b64decode(m_name)+"</a></li>"
+
+            res += "<li>["+li_dict2[i]+"]<a href=\"/more?c="+self.q["c"][0]+"&m="+base64.urlsafe_b64encode(m_name)+"\">"+m_name+"</a></li>"
 
         res += "</ul>"
         return {"title":_c,"body":res}
@@ -55,7 +64,9 @@ class Page(TBase):
         res = "<ul>"
         c = self.d+os.sep+base64.urlsafe_b64decode(self.q["c"][0])
         _m = base64.urlsafe_b64decode(self.q["m"][0])
-        c += os.sep+self.q["m"][0]
+        key = hashlib.md5(str(_m))
+        key = key.hexdigest()
+        c += os.sep+key
         
         m_list = os.listdir(c)
         m_list.sort()
@@ -71,9 +82,9 @@ class Page(TBase):
             if os.path.exists(d_att):
                 for j in os.listdir(d_att):
                     #f_att = os.path.join(d_att,j)
-                    att += "<a href=\"/att?c="+self.q["c"][0]+"&m="+self.q["m"][0]+"&d="+i.rstrip(".msg")+"&a="+j+"\">"+base64.urlsafe_b64decode(j)+"</a><br />"
+                    att += "<a href=\"/att?c="+self.q["c"][0]+"&m="+key+"&d="+i.rstrip(".msg")+"&a="+j+"\">"+base64.urlsafe_b64decode(j)+"</a><br />"
 
-            res += "<li style=\"margin-top:20px;border-top: 1px dashed #d00000;\"><h1>Mail Content:</h1><pre>"+b+"</pre>"+att+"</li>"
+            res += "<li class=\"mail_body\"><h1>"+_m+"</h1><pre>"+b+"</pre>"+att+"</li>"
 
         res += "</ul>"
         return {"title":_m,"body":res}
