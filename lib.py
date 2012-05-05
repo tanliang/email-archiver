@@ -174,7 +174,7 @@ class TMail(TBase):
     def getDate(self, mail):
         _data = " ".join(mail['Date'].split(" ")[1:5])
         _date = time.strptime(_data, "%d %b %Y %H:%M:%S")
-        return time.strftime("%Y%m%d-%H%M%S", _date)
+        return time.strftime("%Y%m%d%H%M%S", _date)
 
     def fetchBody(self, mail, m_dir):
         if mail.is_multipart():

@@ -41,7 +41,7 @@ class GetHandler(BaseHTTPRequestHandler):
             page = getattr(Page(parsed_path.query), "get_"+_p[1:])()
         except:
             _log = traceback.format_exc()
-            print(_log)
+            #print(_log)
             page = {"title":"nothing","body":"nothing here"}
 
         if _p == "/att":

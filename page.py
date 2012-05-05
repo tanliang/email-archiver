@@ -11,6 +11,9 @@ import os, hashlib, base64
 import urlparse
 from stat import *
 
+def getDirFileNum(m_name):
+    return sum([int(os.path.isfile(os.path.join(m_name,files))) for files in os.listdir(m_name)])
+
 class Page(TBase):
 
     def __init__(self, query):
@@ -33,29 +36,26 @@ class Page(TBase):
         _c = base64.urlsafe_b64decode(self.q["c"][0])
         c = self.d+os.sep+_c
         li_dict = {}
-        li_dict2 = {}
-        li_sort = []
 
         for i in os.listdir(c):
             m_name = os.path.join(c,i)
             if os.path.isfile(m_name):
                 continue
-            t = os.stat(m_name)[ST_MTIME]
-            key = str(t)+"_"+i
+            _t = os.stat(m_name)[ST_MTIME]
+            _t = time.strftime(TBase.TFORMAT, time.localtime(float(_t)))
+            _n = str(getDirFileNum(m_name))
+            key = _t+"_"+i+"_"+_n
 
             f = open(m_name+".name")
             b = f.read()
             f.close()
 
             li_dict[key] = b
-            li_dict2[key] = str(sum([int(os.path.isfile(os.path.join(m_name,files))) for files in os.listdir(m_name)]))
-            li_sort.append(key)
 
-        li_sort.sort()
-        for i in li_sort:
+        for i in sorted(li_dict.keys(), key=lambda d:d.split("_")[0], reverse=True):
             m_name = li_dict[i]
-
-            res += "<li>["+li_dict2[i]+"]<a href=\"/more?c="+self.q["c"][0]+"&m="+base64.urlsafe_b64encode(m_name)+"\">"+m_name+"</a></li>"
+            _t, _k, _n = i.split("_")
+            res += "<li>["+_n+"]"+_t+" <a href=\"/more?c="+self.q["c"][0]+"&m="+base64.urlsafe_b64encode(m_name)+"\" target=\"_blank\">"+m_name+"</a></li>"
 
         res += "</ul>"
         return {"title":_c,"body":res}
@@ -69,8 +69,8 @@ class Page(TBase):
         c += os.sep+key
         
         m_list = os.listdir(c)
-        m_list.sort()
-        for i in m_list:
+        _count = 0
+        for i in sorted(m_list, key=lambda d:d.split("_")[0]):
             f_name = os.path.join(c,i)
             if os.path.isdir(f_name):
                 continue
@@ -82,9 +82,21 @@ class Page(TBase):
             if os.path.exists(d_att):
                 for j in os.listdir(d_att):
                     #f_att = os.path.join(d_att,j)
-                    att += "<a href=\"/att?c="+self.q["c"][0]+"&m="+key+"&d="+i.rstrip(".msg")+"&a="+j+"\">"+base64.urlsafe_b64decode(j)+"</a><br />"
+                    att += "<a name=\"att"+str(_count)+"\" href=\"/att?c="+self.q["c"][0]+"&m="+key+"&d="+i.rstrip(".msg")+"&a="+j+"\">"+base64.urlsafe_b64decode(j)+"</a><br />"
+            
+            res += "<li class=\"mail_body\"><h1><a name=\"next"+str(_count)+"\">"
+            res_att = ""
+            if att != "":
+                res_att = " <a href=\"#att"+str(_count)+"\">Attachment</a>"
 
-            res += "<li class=\"mail_body\"><h1>"+_m+"</h1><pre>"+b+"</pre>"+att+"</li>"
+            _count += 1
+            res += "#"+str(_count)+" "+_m+"</a></h1>"
+            tip_next = "Next"
+            if _count == getDirFileNum(c):
+                _count = 0
+                tip_next = "Top"
+            res += " <a href=\"#next"+str(_count)+"\">"+tip_next+"</a>"+res_att
+            res += "<pre>"+b+"</pre>"+att+"<a href=\"#next0\">Top</a></li>"
 
         res += "</ul>"
         return {"title":_m,"body":res}
