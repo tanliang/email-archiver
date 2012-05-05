@@ -48,7 +48,7 @@ class Page(TBase):
             f.close()
 
             li_dict[key] = b
-            li_dict2[key] = str(sum([len(files) for root,dirs,files in os.walk(m_name)]))
+            li_dict2[key] = str(sum([int(os.path.isfile(os.path.join(m_name,files))) for files in os.listdir(m_name)]))
             li_sort.append(key)
 
         li_sort.sort()
