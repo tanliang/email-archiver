@@ -169,7 +169,12 @@ class TMail(TBase):
         subject, t = email.Header.decode_header(mail["Subject"])[0]
         if t:
             subject = subject.decode(t, "ignore").encode("utf-8")
-        return subject.split(":")[-1].strip()
+        res = subject.split(":")[-1].strip()
+        if res == "":
+            res = subject
+            self._log("subject parse error")
+            self._log(res)
+        return res
 
     def getDate(self, mail):
         _data = " ".join(mail['Date'].split(" ")[1:5])

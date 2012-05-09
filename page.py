@@ -82,12 +82,14 @@ class Page(TBase):
             if os.path.exists(d_att):
                 for j in os.listdir(d_att):
                     #f_att = os.path.join(d_att,j)
-                    att += "<a name=\"att"+str(_count)+"\" href=\"/att?c="+self.q["c"][0]+"&m="+key+"&d="+i.rstrip(".msg")+"&a="+j+"\">"+base64.urlsafe_b64decode(j)+"</a><br />"
+                    att_name = base64.urlsafe_b64decode(j)
+                    att_suffix = att_name.split(".")[-1]
+                    if att_suffix.lower() in ["jpg", "jpeg", "png", "bmp", "gif"]:
+                        att += "<p>"+att_name+"<img src=\"/att?c="+self.q["c"][0]+"&m="+key+"&d="+i.rstrip(".msg")+"&a="+j+"\" alt=\""+att_name+"\"/></p>"
+                    else:
+                        att += "<p><a href=\"/att?c="+self.q["c"][0]+"&m="+key+"&d="+i.rstrip(".msg")+"&a="+j+"\">"+att_name+"</a></p>"
             
             res += "<li class=\"mail_body\"><h1><a name=\"next"+str(_count)+"\">"
-            res_att = ""
-            if att != "":
-                res_att = " <a href=\"#att"+str(_count)+"\">Attachment</a>"
 
             _count += 1
             res += "#"+str(_count)+" "+_m+"</a></h1>"
@@ -95,8 +97,8 @@ class Page(TBase):
             if _count == getDirFileNum(c):
                 _count = 0
                 tip_next = "Top"
-            res += " <a href=\"#next"+str(_count)+"\">"+tip_next+"</a>"+res_att
-            res += "<pre>"+b+"</pre>"+att+"<a href=\"#next0\">Top</a></li>"
+            res += " <a href=\"#next"+str(_count)+"\">"+tip_next+"</a>"+att
+            res += "<pre>"+b+"</pre><a href=\"#next0\">Top</a></li>"
 
         res += "</ul>"
         return {"title":_m,"body":res}
