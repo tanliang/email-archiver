@@ -167,10 +167,6 @@ class TMail(TBase):
                 self.M.dele(idx)
 
     def getTitle(self, mail):
-        """
-            for multi charset in subject
-            Re: =?UTF-8?B?5YWz5LqO6YCa6YGT5oiQ5Yqf546H5L2O55qE5Y6f5Zug5o6S?==?UTF-8?B?5p+l?=
-        """
         res = ""
         for subject, t in email.Header.decode_header(mail["Subject"]):
             if t:
