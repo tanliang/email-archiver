@@ -35,7 +35,7 @@ class TBase:
         now = time.strftime(tf, time.localtime())
         _log = now + " Log info: (" + \
             str(self.__class__) + \
-            ") " + _log + "\n"
+            ") " + str(_log) + "\n"
 
         if self.__class__.DEBUG:
             print(_log)
@@ -140,15 +140,16 @@ class TMail(TBase):
         for i in range(msg_num):
             idx = i+1
             mail = email.message_from_string(string.join(self.M.retr(idx)[1], "\n"))
-            m_title = str(self.getTitle(mail))
-            b64_title = base64.urlsafe_b64encode(m_title)
-            m_date = self.getDate(mail)
-
-            key = hashlib.md5(str(m_title))
-            key = key.hexdigest()
-            self.m_body = ""
-            self.m_more = {}
             try:
+                m_title = str(self.getTitle(mail))
+                b64_title = base64.urlsafe_b64encode(m_title)
+                m_date = self.getDate(mail)
+
+                key = hashlib.md5(str(m_title))
+                key = key.hexdigest()
+                self.m_body = ""
+                self.m_more = {}
+
                 m_dir = p_dir+os.sep+key
                 if os.path.exists(m_dir+".name") == False:
                     self.fwrite(p_dir, key+".name", m_title)
@@ -166,14 +167,17 @@ class TMail(TBase):
                 self.M.dele(idx)
 
     def getTitle(self, mail):
-        subject, t = email.Header.decode_header(mail["Subject"])[0]
-        if t:
-            subject = subject.decode(t, "ignore").encode("utf-8")
+        """
+            for multi charset in subject
+            Re: =?UTF-8?B?5YWz5LqO6YCa6YGT5oiQ5Yqf546H5L2O55qE5Y6f5Zug5o6S?==?UTF-8?B?5p+l?=
+        """
+        res = ""
+        for subject, t in email.Header.decode_header(mail["Subject"]):
+            if t:
+                subject = subject.decode(t, "ignore").encode("utf-8")
+            res += subject
         res = subject.split(":")[-1].strip()
-        if res == "":
-            res = subject
-            self._log("subject parse error")
-            self._log(res)
+
         return res
 
     def getDate(self, mail):
