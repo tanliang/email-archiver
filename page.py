@@ -85,7 +85,7 @@ class Page(TBase):
                     att_name = base64.urlsafe_b64decode(j)
                     att_suffix = att_name.split(".")[-1]
                     if att_suffix.lower() in ["jpg", "jpeg", "png", "bmp", "gif"]:
-                        att += "<p>"+att_name+"<img src=\"/att?c="+self.q["c"][0]+"&m="+key+"&d="+i.rstrip(".msg")+"&a="+j+"\" alt=\""+att_name+"\"/></p>"
+                        att += "<p>"+att_name+"<img class=\"att\" src=\"/att?c="+self.q["c"][0]+"&m="+key+"&d="+i.rstrip(".msg")+"&a="+j+"\" alt=\""+att_name+"\"/></p>"
                     else:
                         att += "<p><a href=\"/att?c="+self.q["c"][0]+"&m="+key+"&d="+i.rstrip(".msg")+"&a="+j+"\">"+att_name+"</a></p>"
             
@@ -98,14 +98,18 @@ class Page(TBase):
                 _count = 0
                 tip_next = "Top"
             res += " <a href=\"#next"+str(_count)+"\">"+tip_next+"</a>"+att
-            res += "<pre>"+b+"</pre><a href=\"#next0\">Top</a></li>"
+            res += "<div>"+b+"</div><a href=\"#next0\">Top</a></li>"
 
         res += "</ul>"
         return {"title":_m,"body":res}
 
     def get_att(self):
-        c = self.d+os.sep+base64.urlsafe_b64decode(self.q["c"][0])
-        a = base64.urlsafe_b64decode(self.q["a"][0])
-        p = c+os.sep+self.q["m"][0]+os.sep+self.q["d"][0]+os.sep+self.q["a"][0]
-        print(p)
+        if self.q["c"][0] == "inner_pic":
+            a = self.q["cid"][0]
+            p = "data"+os.sep+"inner_pic"+os.sep+self.q["m"][0]+os.sep+base64.urlsafe_b64encode(a)
+        else:
+            c = self.d+os.sep+base64.urlsafe_b64decode(self.q["c"][0])
+            a = base64.urlsafe_b64decode(self.q["a"][0])
+            p = c+os.sep+self.q["m"][0]+os.sep+self.q["d"][0]+os.sep+self.q["a"][0]
+        #print(p)
         return {"title":a,"body":p}

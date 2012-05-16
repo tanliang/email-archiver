@@ -2,7 +2,7 @@
 <head>
 <meta charset="UTF-8" />
 <style>
-.mail_body, img {margin:20px;margin-right:40px;padding:10px;border: 1px dashed #d00000;}
+.mail_body, img.att {margin:20px;margin-right:40px;padding:10px;border: 1px dashed #d00000;}
 li {line-height:150%;}
 </style>
 <title>$title</title>

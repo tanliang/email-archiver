@@ -32,8 +32,8 @@ class TBase:
 
     def _log(self, _log):
         tf = self.__class__.TFORMAT
-        now = time.strftime(tf, time.localtime())
-        _log = now + " Log info: (" + \
+        now_time = time.strftime(tf, time.localtime())
+        _log = now_time + " Log info: (" + \
             str(self.__class__) + \
             ") " + str(_log) + "\n"
 
@@ -83,9 +83,13 @@ class TMailMoreThread(threading.Thread):
         self._m = _m
 
     def run(self):
-        f_name, t = email.Header.decode_header(self.mail.get_filename())[0]
-        if t:
-            f_name = f_name.decode(t, "ignore").encode("utf-8")
+        f_name = self.mail["Content-ID"].strip("<>")
+        if f_name:
+            self.m_dir = "data"+os.sep+"inner_pic"+os.sep+time.strftime("%Y%m", time.localtime())
+        else:
+            f_name, t = email.Header.decode_header(self.mail.get_filename())[0]
+            if t:
+                f_name = f_name.decode(t, "ignore").encode("utf-8")
 
         f_more = self.mail.get_payload(decode = True)
         self._m.fwrite(self.m_dir, base64.urlsafe_b64encode(f_name), f_more, "wb")
@@ -97,7 +101,7 @@ class TMail(TBase):
         self.CONN_FAIL = False
         self.CONN_SUCC = True
         self.M = None
-        self.m_body = ""
+        self.m_body = {"text/plain":"","text/html":""}
         self.m_more = {}
 
     def __del__ (self):
@@ -147,7 +151,7 @@ class TMail(TBase):
 
                 key = hashlib.md5(str(m_title))
                 key = key.hexdigest()
-                self.m_body = ""
+                self.m_body = {"text/plain":"","text/html":""}
                 self.m_more = {}
 
                 m_dir = p_dir+os.sep+key
@@ -156,7 +160,19 @@ class TMail(TBase):
 
                 f_name = m_date+"_"+key
                 self.fetchBody(mail, m_dir+os.sep+f_name)
-                self.fwrite(m_dir, f_name+".msg", self.m_body)
+                m_body = self.m_body["text/html"]
+                if m_body == "":
+                    m_body = self.m_body["text/plain"].replace("\n", "<br />")
+
+                # parse inner pic
+                replace_old = "=\"cid:"
+                repalce_new = "=\"/att?c=inner_pic&m="+time.strftime("%Y%m", time.localtime())+"&cid="
+                poscid = m_body.find(replace_old)
+                if poscid > -1:
+                    m_body = m_body.replace(replace_old, repalce_new)
+                    #print(self.m_body[poscid:poscid+40])
+
+                self.fwrite(m_dir, f_name+".msg", m_body)
             except:
                 _log = traceback.format_exc()
                 self._log(_log)
@@ -186,20 +202,20 @@ class TMail(TBase):
             for part in mail.get_payload():
                 self.fetchBody(part, m_dir)
         else:
-            t = mail.get_content_type()[0:4]
-            if t == "text":
-                self._getBody(mail)
+            t = str(mail.get_content_type())
+            if t[0:4] == "text":
+                self._getBody(mail, t)
             else:
                 mt = TMailMoreThread()
                 mt.init(self, mail, m_dir)
                 mt.start()
             
-    def _getBody(self, mail):
+    def _getBody(self, mail, t):
         char = mail.get_content_charset()
         if char == None:
-            self.m_body += mail.get_payload(decode = True)
+            self.m_body[t] += mail.get_payload(decode = True)
         else:
-            self.m_body += mail.get_payload(decode = True).decode(char, "ignore").encode('utf-8')
+            self.m_body[t] += mail.get_payload(decode = True).decode(char, "ignore").encode('utf-8')
 
 class Config(TBase):
 
