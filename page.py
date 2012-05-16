@@ -87,7 +87,7 @@ class Page(TBase):
                     att_name = base64.urlsafe_b64decode(j)
                     att_suffix = att_name.split(".")[-1]
                     if att_suffix.lower() in ["jpg", "jpeg", "png", "bmp", "gif"]:
-                        att += "<p>"+att_name+"<img class=\"att\" src=\"/att?c="+self.q["c"][0]+"&m="+key+"&d="+i.rstrip(".msg")+"&a="+j+"\" alt=\""+att_name+"\"/></p>"
+                        att += "<p>"+att_name+"<img class=\"att\" width=\"600px\" src=\"/att?c="+self.q["c"][0]+"&m="+key+"&d="+i.rstrip(".msg")+"&a="+j+"\" alt=\""+att_name+"\"/></p>"
                     else:
                         att += "<p><a href=\"/att?c="+self.q["c"][0]+"&m="+key+"&d="+i.rstrip(".msg")+"&a="+j+"\">"+att_name+"</a></p>"
             
@@ -109,7 +109,7 @@ class Page(TBase):
         c = self.d+os.sep+base64.urlsafe_b64decode(self.q["c"][0])
         p = c+os.sep+self.q["m"][0]+os.sep+self.q["d"][0]+os.sep
 
-        if self.q["t"][0] == "inner_pic":
+        if self.q.has_key("t") and self.q["t"][0] == "inner_pic":
             a = self.q["a"][0]
             p += "inner_pic"+os.sep+base64.urlsafe_b64encode(a)
         else:
