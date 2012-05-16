@@ -83,9 +83,10 @@ class TMailMoreThread(threading.Thread):
         self._m = _m
 
     def run(self):
-        f_name = self.mail["Content-ID"].strip("<>")
+        f_name = self.mail["Content-ID"]
         if f_name:
-            self.m_dir = "data"+os.sep+"inner_pic"+os.sep+time.strftime("%Y%m", time.localtime())
+            f_name = f_name.strip("<>")
+            self.m_dir += os.sep+"inner_pic"
         else:
             f_name, t = email.Header.decode_header(self.mail.get_filename())[0]
             if t:
@@ -160,13 +161,17 @@ class TMail(TBase):
 
                 f_name = m_date+"_"+key
                 self.fetchBody(mail, m_dir+os.sep+f_name)
+
+                # use html or plain text
                 m_body = self.m_body["text/html"]
                 if m_body == "":
                     m_body = self.m_body["text/plain"].replace("\n", "<br />")
 
                 # parse inner pic
                 replace_old = "=\"cid:"
-                repalce_new = "=\"/att?c=inner_pic&m="+time.strftime("%Y%m", time.localtime())+"&cid="
+                _c = base64.urlsafe_b64encode(self.params["addr"])
+                _m = key
+                repalce_new = "=\"/att?t=inner_pic&c="+_c+"&m="+key+"&d="+f_name+"&a="
                 poscid = m_body.find(replace_old)
                 if poscid > -1:
                     m_body = m_body.replace(replace_old, repalce_new)

@@ -81,7 +81,9 @@ class Page(TBase):
             att = ""
             if os.path.exists(d_att):
                 for j in os.listdir(d_att):
-                    #f_att = os.path.join(d_att,j)
+                    f_att = os.path.join(d_att,j)
+                    if os.path.isdir(f_att):
+                        continue
                     att_name = base64.urlsafe_b64decode(j)
                     att_suffix = att_name.split(".")[-1]
                     if att_suffix.lower() in ["jpg", "jpeg", "png", "bmp", "gif"]:
@@ -96,20 +98,22 @@ class Page(TBase):
             tip_next = "Next"
             if _count == getDirFileNum(c):
                 _count = 0
-                tip_next = "Top"
+                tip_next = "<font color=red>Top</font>"
             res += " <a href=\"#next"+str(_count)+"\">"+tip_next+"</a>"+att
-            res += "<div>"+b+"</div><a href=\"#next0\">Top</a></li>"
+            res += "<br /><br /><div>"+b+"</div><a href=\"#next0\">Top</a></li>"
 
         res += "</ul>"
         return {"title":_m,"body":res}
 
     def get_att(self):
-        if self.q["c"][0] == "inner_pic":
-            a = self.q["cid"][0]
-            p = "data"+os.sep+"inner_pic"+os.sep+self.q["m"][0]+os.sep+base64.urlsafe_b64encode(a)
+        c = self.d+os.sep+base64.urlsafe_b64decode(self.q["c"][0])
+        p = c+os.sep+self.q["m"][0]+os.sep+self.q["d"][0]+os.sep
+
+        if self.q["t"][0] == "inner_pic":
+            a = self.q["a"][0]
+            p += "inner_pic"+os.sep+base64.urlsafe_b64encode(a)
         else:
-            c = self.d+os.sep+base64.urlsafe_b64decode(self.q["c"][0])
             a = base64.urlsafe_b64decode(self.q["a"][0])
-            p = c+os.sep+self.q["m"][0]+os.sep+self.q["d"][0]+os.sep+self.q["a"][0]
+            p += self.q["a"][0]
         #print(p)
         return {"title":a,"body":p}
