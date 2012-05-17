@@ -166,16 +166,15 @@ class TMail(TBase):
                 m_body = self.m_body["text/html"]
                 if m_body == "":
                     m_body = self.m_body["text/plain"].replace("\n", "<br />")
-
-                # parse inner pic
-                replace_old = "=\"cid:"
-                _c = base64.urlsafe_b64encode(self.params["addr"])
-                _m = key
-                repalce_new = "=\"/att?t=inner_pic&c="+_c+"&m="+key+"&d="+f_name+"&a="
-                poscid = m_body.find(replace_old)
-                if poscid > -1:
-                    m_body = m_body.replace(replace_old, repalce_new)
-                    #print(self.m_body[poscid:poscid+40])
+                else:
+                    # parse inner pic for html 
+                    replace_old = "=\"cid:"
+                    _c = base64.urlsafe_b64encode(self.params["addr"])
+                    _m = key
+                    repalce_new = "=\"/att?t=inner_pic&c="+_c+"&m="+key+"&d="+f_name+"&a="
+                    poscid = m_body.find(replace_old)
+                    if poscid > -1:
+                        m_body = m_body.replace(replace_old, repalce_new)
 
                 self.fwrite(m_dir, f_name+".msg", m_body)
             except:
